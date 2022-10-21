@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>Scoreboard</title>
+    <script src="/socket.io/socket.io.js"></script>
+    <script type="text/javascript">
+
+        function calcClockText(h, m, s, ms) {
+
+            h = h == 0 ? "" : h + ":";
+
+            m = m == 0 ? "" : h == 0 ? m >= 10 ? m : m + ":" : "0" + m + ":";
+
+            s = m == 0 ? s : s >= 10 ? s : "0" + s;
+
+            ms = m == 0 && h == 0 ? "." + ms : "";
+
+            return "" + h + m + s + ms + "";
+        }
+        function updateBoard(game) {
+            console.log(game);
+            updateItem(game.home_name, "home");
+            updateItem(game.home_score, "homeScore");
+            updateItem(game.away_name, "away");
+            updateItem(game.away_score, "awayScore");
+            updateItem(game.period, "period");
+            updateItem(calcClockText(game.clock.h, game.clock.m, game.clock.s, game.clock.ms), "clock");
+
+        }
+        function updateItem(datapoint, elementId) {
+            if (elementId == "period") {
+                var periodOutput = "";
+                var periodData = datapoint;
+                var sizeCase = 1;
+                switch (periodData) {
+                    case '-1':
+                        periodOutput = "TIME";
+                        document.getElementById('period').style = "font-size:23px; top:5px";
+                        sizeCase = 3;
+                        break;
+                    case '0':
+                        periodOutput = "PRE<br>GAME";
+                        sizeCase = 2;
+                        break;
+                    case '1':
+                        periodOutput = "1st";
+                        sizeCase = 1;
+                        break;
+                    case '2':
+                        periodOutput = "2nd";
+                        sizeCase = 1;
+                        break;
+                    case '3':
+                        periodOutput = "3rd";
+                        sizeCase = 1;
+                        break;
+                    case '4':
+                        periodOutput = "4th";
+                        sizeCase = 1;
+                        break;
+                    case '5':
+                        periodOutput = "GAME<br>END";
+                        document.getElementById('period').style = "font-size:23px; top:5px";
+                        sizeCase = 2;
+                        break;
+                    case '6':
+                        periodOutput = "TIME";
+                        document.getElementById('period').style = "font-size:23px; top:5px";
+                        sizeCase = 3;
+                        break;
+                    default:
+                        periodOutput = "";
+                        break;
+                }
+                switch (sizeCase) {
+                    case 1:
+                        document.getElementById('period').style = "";
+                        break;
+                    case 2:
+                        document.getElementById('period').style = "font-size:23px; top:5px";
+                        break;
+                    case 3:
+                        document.getElementById('period').style = "font-size:30px; top:-5px;";
+                        break;
+                }
+                document.getElementById(elementId).innerHTML = periodOutput;
+            } else {
+                document.getElementById(elementId).innerHTML = datapoint;
+            }
+        }
+
+    </script>
+    <style>
+        :root {
+            --awayColor: red;
+        }
+
+        #awayColor {
+            background-color: var(--awayColor);
+        }
+
+        digits {
+            font-family: 'Arial Black';
+            font-size: 54px;
+            z-index: 2;
+            left: 469px;
+            top: 10px;
+            color: white;
+            width: 1445px
+        }
+
+        digits span {
+            text-align: center;
+            display: inline-block;
+
+        }
+
+        digits #home {
+            width: 376px;
+            text-transform: uppercase;
+
+        }
+
+        digits #away {
+            width: 370px;
+            text-transform: uppercase;
+            margin-left: 2px
+        }
+
+        digits #homeScore,
+        #awayScore {
+            width: 156px;
+        }
+
+        digits #period {
+            margin-left: 16px;
+            font-size: 45px;
+            width: 117px;
+
+            top: -4px;
+            position: relative;
+        }
+
+        digits #clock {
+            width: 242px;
+        }
+    </style>
+</head>
+
+<body style="margin: 0 0;">
+    <digits style="position:absolute;">
+        <span id="home">HOME</span><span id="homeScore">999</span></span><span id="away">AWAY</span><span
+            id="awayScore">999</span><span id="period">1st</span><span id="clock">00:00</span>
+    </digits>
+    <board>
+        <img style="position:absolute; top:3px; left:469px; z-index: 1;" src="img/top.png">
+        <div id="awayColor" style="position: absolute; left: 1004px; top:4px; width: 525px; height: 94px;"></div>
+        <img src="img/bottom.png">
+    </board>
+    <script>
+        //Make connection
+        var socket = io.connect(document.location.href.slice(0, document.location.href.indexOf("scoreboard")));
+
+        var game = {};
+
+        socket.on('board', function (data) {
+            updateBoard(data);
+            game = data;
+            document.documentElement.style.setProperty("--awayColor", game.away_color);
+
+        });
+
+        socket.on('clock', function (data) {
+            game = data;
+            document.getElementById('clock').innerHTML = calcClockText(game.clock.h, game.clock.m, game.clock.s, game.clock.ms);
+
+        });
+    </script>
+</body>
+
+</html>
